@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projects - Your Name</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-logo">YourName</a>
+            <button class="nav-toggle" aria-label="Toggle navigation">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <ul class="nav-menu">
+                <li><a href="index.html#about">About</a></li>
+                <li><a href="projects.html" class="active">Projects</a></li>
+                <li><a href="blog.html">Blog</a></li>
+                <li><a href="index.html#contact">Contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <header class="page-header">
+        <div class="container">
+            <span class="section-tag">My Work</span>
+            <h1>Featured <span class="gradient-text">Projects</span></h1>
+            <p>A collection of projects I've worked on, from web applications to mobile apps and everything in between.</p>
+        </div>
+    </header>
+
+    <section class="projects-full">
+        <div class="container">
+            <div class="project-filters">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="web">Web Apps</button>
+                <button class="filter-btn" data-filter="mobile">Mobile</button>
+                <button class="filter-btn" data-filter="design">Design</button>
+            </div>
+
+            <div class="projects-grid-full">
+                <article class="project-card-full" data-category="web">
+                    <div class="project-image-full" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <div class="project-overlay">
+                            <a href="#" class="btn btn-small">Live Demo</a>
+                            <a href="#" class="btn btn-small btn-outline">GitHub</a>
+                        </div>
+                    </div>
+                    <div class="project-content-full">
+                        <span class="project-category">Web Application</span>
+                        <h3>E-Commerce Platform</h3>
+                        <p>A comprehensive e-commerce solution featuring real-time inventory management, secure Stripe payments, user authentication, and a powerful admin dashboard for managing products, orders, and customers.</p>
+                        <div class="project-tech">
+                            <span>React</span>
+                            <span>Node.js</span>
+                            <span>MongoDB</span>
+                            <span>Stripe</span>
+                            <span>Redis</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="project-card-full" data-category="mobile">
+                    <div class="project-image-full" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                        <div class="project-overlay">
+                            <a href="#" class="btn btn-small">App Store</a>
+                            <a href="#" class="btn btn-small btn-outline">GitHub</a>
+                        </div>
+                    </div>
+                    <div class="project-content-full">
+                        <span class="project-category">Mobile Application</span>
+                        <h3>Fitness Tracker Pro</h3>
+                        <p>A cross-platform mobile application for tracking workouts, nutrition, and health metrics. Features include custom workout plans, progress analytics, social challenges, and Apple Health/Google Fit integration.</p>
+                        <div class="project-tech">
+                            <span>React Native</span>
+                            <span>Firebase</span>
+                            <span>Redux</span>
+                            <span>Chart.js</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="project-card-full" data-category="web">
+                    <div class="project-image-full" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                        <div class="project-overlay">
+                            <a href="#" class="btn btn-small">Live Demo</a>
+                            <a href="#" class="btn btn-small btn-outline">GitHub</a>
+                        </div>
+                    </div>
+                    <div class="project-content-full">
+                        <span class="project-category">Dashboard</span>
+                        <h3>Analytics Dashboard</h3>
+                        <p>A real-time business intelligence dashboard with interactive data visualizations, custom report generation, and automated alerts. Processes millions of data points with sub-second query performance.</p>
+                        <div class="project-tech">
+                            <span>Vue.js</span>
+                            <span>D3.js</span>
+                            <span>Python</span>
+                            <span>PostgreSQL</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="project-card-full" data-category="design">
+                    <div class="project-image-full" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                        <div class="project-overlay">
+                            <a href="#" class="btn btn-small">View Case Study</a>
+                        </div>
+                    </div>
+                    <div class="project-content-full">
+                        <span class="project-category">UI/UX Design</span>
+                        <h3>Banking App Redesign</h3>
+                        <p>A complete redesign of a mobile banking application focusing on accessibility, user experience, and modern design principles. Increased user engagement by 40% and reduced support tickets by 25%.</p>
+                        <div class="project-tech">
+                            <span>Figma</span>
+                            <span>Prototyping</span>
+                            <span>User Research</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="project-card-full" data-category="web">
+                    <div class="project-image-full" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);">
+                        <div class="project-overlay">
+                            <a href="#" class="btn btn-small">Live Demo</a>
+                            <a href="#" class="btn btn-small btn-outline">GitHub</a>
+                        </div>
+                    </div>
+                    <div class="project-content-full">
+                        <span class="project-category">SaaS Platform</span>
+                        <h3>Project Management Tool</h3>
+                        <p>A collaborative project management platform with real-time updates, Kanban boards, time tracking, team chat, and integrations with popular tools like Slack, GitHub, and Google Workspace.</p>
+                        <div class="project-tech">
+                            <span>Next.js</span>
+                            <span>TypeScript</span>
+                            <span>Prisma</span>
+                            <span>WebSockets</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="project-card-full" data-category="mobile">
+                    <div class="project-image-full" style="background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%);">
+                        <div class="project-overlay">
+                            <a href="#" class="btn btn-small">Play Store</a>
+                            <a href="#" class="btn btn-small btn-outline">GitHub</a>
+                        </div>
+                    </div>
+                    <div class="project-content-full">
+                        <span class="project-category">Mobile Application</span>
+                        <h3>Recipe Discovery App</h3>
+                        <p>An AI-powered recipe application that suggests meals based on available ingredients, dietary preferences, and cooking skill level. Features include meal planning, grocery lists, and step-by-step cooking instructions.</p>
+                        <div class="project-tech">
+                            <span>Flutter</span>
+                            <span>Dart</span>
+                            <span>OpenAI API</span>
+                            <span>Supabase</span>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta-section">
+        <div class="container">
+            <div class="cta-content">
+                <h2>Have a project in mind?</h2>
+                <p>I'm always excited to work on new challenges. Let's discuss how we can collaborate.</p>
+                <a href="index.html#contact" class="btn btn-primary">Start a Conversation</a>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <p>&copy; 2026 Your Name. All rights reserved.</p>
+                <p>Built with ❤ and lots of coffee.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/script.js"></script>
+</body>
+</html>
