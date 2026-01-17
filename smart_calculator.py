@@ -162,7 +162,8 @@ class SMARTCalculator:
         self,
         system_size_kw: float,
         adders: List[str] = None,
-        annual_production_kwh_per_kw: float = 1200
+        annual_production_kwh_per_kw: float = 1200,
+        incentive_period_years: int = 10
     ) -> Dict:
         """
         Complete calculation of incentive rate and revenue.
@@ -171,6 +172,7 @@ class SMARTCalculator:
             system_size_kw: System size in kW AC
             adders: List of adder names to apply
             annual_production_kwh_per_kw: Annual production per kW (default: 1200 kWh/kW)
+            incentive_period_years: Incentive period in years (default: 10, can be 20)
 
         Returns:
             Dictionary containing all calculation results
@@ -182,7 +184,8 @@ class SMARTCalculator:
         revenue_info = self.calculate_revenue(
             system_size_kw,
             rate_info['total_rate'],
-            annual_production_kwh_per_kw
+            annual_production_kwh_per_kw,
+            incentive_period_years
         )
 
         return {
@@ -220,14 +223,15 @@ class SMARTCalculator:
         print(f"TOTAL INCENTIVE RATE: ${results['total_rate']:.4f}/kWh")
         print(f"{'='*60}")
 
+        years = results['incentive_period_years']
         print(f"\n{'-'*60}")
-        print("REVENUE PROJECTION (10-YEAR)")
+        print(f"REVENUE PROJECTION ({years}-YEAR)")
         print(f"{'-'*60}")
         print(f"Annual Production: {results['annual_production_kwh']:,.0f} kWh/year")
         print(f"Annual Revenue: ${results['annual_revenue']:,.2f}/year")
-        print(f"Incentive Period: {results['incentive_period_years']} years")
+        print(f"Incentive Period: {years} years")
         print(f"\n{'='*60}")
-        print(f"TOTAL 10-YEAR REVENUE: ${results['total_revenue']:,.2f}")
+        print(f"TOTAL {years}-YEAR REVENUE: ${results['total_revenue']:,.2f}")
         print(f"{'='*60}\n")
 
     @staticmethod
@@ -285,6 +289,15 @@ def main():
         adders=['energy_storage', 'pollinator_habitat']
     )
     calculator.print_results(results4)
+
+    # Example 5: 20-year incentive period
+    print("\n### EXAMPLE 5: Commercial System with 20-Year Incentive ###")
+    results5 = calculator.calculate(
+        system_size_kw=750,
+        adders=['energy_storage', 'location_based'],
+        incentive_period_years=20
+    )
+    calculator.print_results(results5)
 
     # Show available adders
     calculator.list_available_adders()

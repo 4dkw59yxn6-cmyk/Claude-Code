@@ -4,11 +4,11 @@ A Python script to calculate Massachusetts Solar Massachusetts Renewable Target 
 
 ## Overview
 
-The SMART program is Massachusetts' solar incentive program that provides per-kWh incentive payments for solar energy generation over a 10-year period. This calculator helps estimate:
+The SMART program is Massachusetts' solar incentive program that provides per-kWh incentive payments for solar energy generation over a 10 or 20-year period. This calculator helps estimate:
 
 - Total incentive rate ($/kWh) based on system size and applicable adders
 - Annual revenue projections
-- 10-year total revenue
+- 10-year or 20-year total revenue
 
 ## Features
 
@@ -18,7 +18,8 @@ The SMART program is Massachusetts' solar incentive program that provides per-kW
   - Energy Storage Systems
   - Location-Based (landfill, brownfield, carport)
   - Pollinator-Friendly Habitat
-- **Revenue Projections**: Calculates annual and 10-year revenue based on estimated production
+- **Flexible Incentive Periods**: Supports both 10-year and 20-year incentive periods
+- **Revenue Projections**: Calculates annual and total revenue based on estimated production
 - **Multiple Examples**: Includes pre-configured examples for different system types
 
 ## Requirements
@@ -35,7 +36,7 @@ The SMART program is Massachusetts' solar incentive program that provides per-kW
 
 ### Running the Examples
 
-Run the script directly to see four pre-configured examples:
+Run the script directly to see five pre-configured examples:
 
 ```bash
 python3 smart_calculator.py
@@ -46,6 +47,7 @@ This will show calculations for:
 2. Low-income residential system (20 kW)
 3. Commercial system with storage (500 kW)
 4. Large ground-mount system (2,000 kW)
+5. Commercial system with 20-year incentive period (750 kW)
 
 ### Using as a Python Module
 
@@ -57,7 +59,7 @@ from smart_calculator import SMARTCalculator
 # Initialize calculator
 calculator = SMARTCalculator(program_year='py2025')
 
-# Calculate for a 100 kW system with energy storage
+# Calculate for a 100 kW system with energy storage (10-year default)
 results = calculator.calculate(
     system_size_kw=100,
     adders=['energy_storage'],
@@ -69,7 +71,15 @@ calculator.print_results(results)
 
 # Or access individual values
 print(f"Total Rate: ${results['total_rate']:.4f}/kWh")
-print(f"10-Year Revenue: ${results['total_revenue']:,.2f}")
+print(f"Total Revenue: ${results['total_revenue']:,.2f}")
+
+# Calculate with 20-year incentive period
+results_20yr = calculator.calculate(
+    system_size_kw=100,
+    adders=['energy_storage'],
+    incentive_period_years=20
+)
+print(f"20-Year Revenue: ${results_20yr['total_revenue']:,.2f}")
 ```
 
 ### Available Adders
@@ -95,7 +105,7 @@ from smart_calculator import SMARTCalculator
 
 calculator = SMARTCalculator(program_year='py2025')
 
-# Example: 250 kW carport system with energy storage
+# Example: 250 kW carport system with energy storage (10-year)
 results = calculator.calculate(
     system_size_kw=250,
     adders=['location_based', 'energy_storage'],
@@ -103,6 +113,16 @@ results = calculator.calculate(
 )
 
 calculator.print_results(results)
+
+# Example: Same system with 20-year incentive period
+results_20yr = calculator.calculate(
+    system_size_kw=250,
+    adders=['location_based', 'energy_storage'],
+    annual_production_kwh_per_kw=1300,
+    incentive_period_years=20
+)
+
+calculator.print_results(results_20yr)
 ```
 
 ## Program Year Support
@@ -124,7 +144,8 @@ The calculator provides:
 ### Revenue Projection Section
 - **Annual Production**: Estimated kWh generated per year (based on system size × production factor)
 - **Annual Revenue**: Yearly incentive payment (production × total rate)
-- **Total 10-Year Revenue**: Total incentive payments over the 10-year term
+- **Incentive Period**: Number of years for incentive payments (10 or 20 years)
+- **Total Revenue**: Total incentive payments over the specified term
 
 ## Important Notes
 
