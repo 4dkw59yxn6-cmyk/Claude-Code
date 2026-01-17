@@ -20,6 +20,8 @@ The SMART program is Massachusetts' solar incentive program that provides per-kW
   - Pollinator-Friendly Habitat
 - **Flexible Incentive Periods**: Supports both 10-year and 20-year incentive periods
 - **Revenue Projections**: Calculates annual and total revenue based on estimated production
+- **Google Sheets Export**: Export calculations to CSV for easy import into Google Sheets
+- **Batch Comparisons**: Compare multiple scenarios side-by-side in a single spreadsheet
 - **Multiple Examples**: Includes pre-configured examples for different system types
 
 ## Requirements
@@ -124,6 +126,57 @@ results_20yr = calculator.calculate(
 
 calculator.print_results(results_20yr)
 ```
+
+### Exporting to Google Sheets
+
+Export your calculations to CSV format for easy import into Google Sheets:
+
+```python
+from smart_calculator import SMARTCalculator
+
+calculator = SMARTCalculator(program_year='py2025')
+
+# Calculate a scenario
+results = calculator.calculate(
+    system_size_kw=500,
+    adders=['energy_storage', 'location_based']
+)
+
+# Export single calculation
+calculator.export_to_csv(results, "my_solar_project.csv", "500kW Commercial")
+
+# Compare multiple scenarios
+scenario1 = calculator.calculate(system_size_kw=100, adders=[])
+scenario2 = calculator.calculate(system_size_kw=100, adders=['low_income'])
+scenario3 = calculator.calculate(system_size_kw=500, adders=['energy_storage'])
+
+# Export batch comparison
+calculator.export_batch_to_csv([scenario1, scenario2, scenario3], "comparison.csv")
+```
+
+#### Importing into Google Sheets:
+
+1. Run the calculator and generate CSV files
+2. Open Google Sheets (sheets.google.com)
+3. Click **File → Import → Upload**
+4. Select your CSV file
+5. Choose **"Replace spreadsheet"** or **"Insert new sheet(s)"**
+6. Your data will be imported and ready for analysis!
+
+#### What Gets Exported:
+
+**Single Export** (`export_to_csv`):
+- Scenario name and system details
+- Base rate and all applied adders
+- Total incentive rate
+- Annual and total revenue projections
+- Formatted for easy reading
+
+**Batch Export** (`export_batch_to_csv`):
+- Side-by-side comparison of multiple scenarios
+- All key metrics in columns for easy comparison
+- Ready for creating charts and graphs
+- Perfect for comparing different system sizes or adder combinations
 
 ## Program Year Support
 

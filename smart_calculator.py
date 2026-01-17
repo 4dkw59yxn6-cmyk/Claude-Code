@@ -8,6 +8,8 @@ for solar installations under the Massachusetts SMART 3.0 program.
 Based on Program Year 2025 rates (update annually as new rates are published).
 """
 
+import csv
+from datetime import datetime
 from typing import Dict, List
 
 
@@ -247,6 +249,131 @@ class SMARTCalculator:
             print(f"  Rate: ~${rate:.4f}/kWh")
         print("\n" + "="*60 + "\n")
 
+    @staticmethod
+    def export_to_csv(results: Dict, filename: str = None, scenario_name: str = "Scenario"):
+        """
+        Export a single calculation result to CSV file for Google Sheets import.
+
+        Args:
+            results: Results dictionary from calculate()
+            filename: Output filename (default: smart_calculation_YYYYMMDD_HHMMSS.csv)
+            scenario_name: Name for this scenario (default: "Scenario")
+
+        Returns:
+            The filename that was created
+        """
+        if filename is None:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"smart_calculation_{timestamp}.csv"
+
+        with open(filename, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+
+            # Header
+            writer.writerow(['Massachusetts SMART Solar Incentive Calculator'])
+            writer.writerow([f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"])
+            writer.writerow([])
+
+            # Scenario info
+            writer.writerow(['Scenario', scenario_name])
+            writer.writerow(['Program Year', results['program_year'].upper()])
+            writer.writerow(['System Size (kW AC)', results['system_size_kw']])
+            writer.writerow([])
+
+            # Rates
+            writer.writerow(['INCENTIVE RATES'])
+            writer.writerow(['Base Rate ($/kWh)', f"{results['base_rate']:.4f}"])
+
+            if results['adders']:
+                writer.writerow([])
+                writer.writerow(['Applied Adders', 'Rate ($/kWh)'])
+                for adder in results['adders']:
+                    writer.writerow([adder['description'], f"{adder['rate']:.4f}"])
+                writer.writerow(['Total Adder Value', f"{results['total_adder_value']:.4f}"])
+
+            writer.writerow([])
+            writer.writerow(['TOTAL INCENTIVE RATE ($/kWh)', f"{results['total_rate']:.4f}"])
+            writer.writerow([])
+
+            # Revenue
+            writer.writerow(['REVENUE PROJECTION'])
+            writer.writerow(['Annual Production (kWh/year)', f"{results['annual_production_kwh']:.0f}"])
+            writer.writerow(['Annual Revenue ($/year)', f"{results['annual_revenue']:.2f}"])
+            writer.writerow(['Incentive Period (years)', results['incentive_period_years']])
+            writer.writerow([f"TOTAL {results['incentive_period_years']}-YEAR REVENUE ($)", f"{results['total_revenue']:.2f}"])
+
+        print(f"\n✓ Exported to: {filename}")
+        return filename
+
+    @staticmethod
+    def export_batch_to_csv(results_list: List[Dict], filename: str = None):
+        """
+        Export multiple calculation results to CSV file for Google Sheets import.
+        Creates a comparison table format.
+
+        Args:
+            results_list: List of results dictionaries from calculate()
+            filename: Output filename (default: smart_batch_YYYYMMDD_HHMMSS.csv)
+
+        Returns:
+            The filename that was created
+        """
+        if filename is None:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"smart_batch_{timestamp}.csv"
+
+        with open(filename, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+
+            # Header
+            writer.writerow(['Massachusetts SMART Solar Incentive Calculator - Batch Comparison'])
+            writer.writerow([f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"])
+            writer.writerow([])
+
+            # Column headers
+            num_scenarios = len(results_list)
+            headers = ['Parameter'] + [f'Scenario {i+1}' for i in range(num_scenarios)]
+            writer.writerow(headers)
+
+            # System info
+            writer.writerow(['System Size (kW AC)'] + [r['system_size_kw'] for r in results_list])
+            writer.writerow(['Program Year'] + [r['program_year'].upper() for r in results_list])
+
+            # Adders applied
+            max_adders = max(len(r['adders']) for r in results_list)
+            if max_adders > 0:
+                writer.writerow([])
+                writer.writerow(['Applied Adders'] + [''] * num_scenarios)
+                for i in range(max_adders):
+                    row = [f'  Adder {i+1}']
+                    for r in results_list:
+                        if i < len(r['adders']):
+                            row.append(r['adders'][i]['description'])
+                        else:
+                            row.append('')
+                    writer.writerow(row)
+
+            writer.writerow([])
+            writer.writerow(['RATES'])
+            writer.writerow(['Base Rate ($/kWh)'] + [f"{r['base_rate']:.4f}" for r in results_list])
+            writer.writerow(['Total Adder Value ($/kWh)'] + [f"{r['total_adder_value']:.4f}" for r in results_list])
+            writer.writerow(['TOTAL RATE ($/kWh)'] + [f"{r['total_rate']:.4f}" for r in results_list])
+
+            writer.writerow([])
+            writer.writerow(['REVENUE PROJECTIONS'])
+            writer.writerow(['Annual Production (kWh)'] + [f"{r['annual_production_kwh']:.0f}" for r in results_list])
+            writer.writerow(['Annual Revenue ($)'] + [f"{r['annual_revenue']:.2f}" for r in results_list])
+            writer.writerow(['Incentive Period (years)'] + [r['incentive_period_years'] for r in results_list])
+            writer.writerow(['TOTAL REVENUE ($)'] + [f"{r['total_revenue']:.2f}" for r in results_list])
+
+            # ROI comparison (if we had system costs)
+            writer.writerow([])
+            writer.writerow(['Note: Import this CSV into Google Sheets for easy analysis and charting'])
+
+        print(f"\n✓ Exported batch comparison to: {filename}")
+        print(f"  Contains {num_scenarios} scenario(s)")
+        return filename
+
 
 def main():
     """Main function demonstrating calculator usage."""
@@ -301,6 +428,23 @@ def main():
 
     # Show available adders
     calculator.list_available_adders()
+
+    # Export examples
+    print("\n### EXPORT TO GOOGLE SHEETS ###")
+    print("\nExporting calculation results to CSV for Google Sheets...")
+
+    # Export single calculation
+    calculator.export_to_csv(results3, "commercial_system_500kw.csv", "Commercial 500kW")
+
+    # Batch export for comparison
+    all_results = [results1, results2, results3, results4, results5]
+    calculator.export_batch_to_csv(all_results, "smart_comparison.csv")
+
+    print("\nHow to use in Google Sheets:")
+    print("1. Open Google Sheets (sheets.google.com)")
+    print("2. File → Import → Upload → Select the CSV file")
+    print("3. Choose 'Replace spreadsheet' or 'Insert new sheet(s)'")
+    print("4. The data will be formatted and ready for analysis!")
 
     print("\nNOTE: Rates are based on PY2025 and are approximate.")
     print("For official rates, consult the Mass.gov SMART program documentation.")
