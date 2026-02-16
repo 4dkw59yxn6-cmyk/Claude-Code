@@ -79,37 +79,69 @@ DAYS_IN_MONTH = {
 
 # System losses / performance ratio
 SYSTEM_LOSSES = {
-    "inverter_efficiency": 0.966,
+    "inverter_efficiency": 0.975,  # SolarEdge w/ optimizers
     "wiring_losses": 0.98,
     "soiling": 0.98,
     "shading": 0.97,
     "snow": 0.95,        # Waltham, MA gets winter snow
-    "mismatch": 0.98,
+    "mismatch": 0.985,   # Improved with DC optimizers
     "availability": 0.99,
     "temperature_derate": 0.94,  # Annual average for MA climate
 }
 
-# Equipment specifications
+# Bifacial gain (rooftop w/ light-colored membrane, conservative)
+BIFACIAL_GAIN = 0.05  # 5% rear-side gain on commercial flat roof
+
+# Equipment specifications - SEG Solar SEG-590-BTA-BG
 PANEL_SPEC = {
-    "manufacturer": "REC",
-    "model": "REC Alpha Pure-R 430W",
-    "wattage_stc": 430,          # Watts STC
-    "efficiency": 0.220,          # 22.0% module efficiency
-    "dimensions_mm": (1821, 1016, 30),  # L x W x H in mm
-    "area_sqft": 20.3,           # per panel
-    "warranty_years": 25,
-    "degradation_yr1": 0.02,     # 2% first year
+    "manufacturer": "SEG Solar",
+    "model": "SEG-590-BTA-BG",
+    "wattage_stc": 590,          # Watts STC (front side)
+    "efficiency": 0.2284,         # 22.84% module efficiency
+    "dimensions_mm": (2278, 1134, 30),  # L x W x H in mm
+    "area_sqft": 27.81,          # per panel (2.278m x 1.134m)
+    "weight_kg": 32.0,
+    "cells": "N-Type TOPCon 182x91mm, 144 cells",
+    "bifaciality": 0.80,         # 80% ± 10%
+    "glass": "2.0mm AR coated semi-tempered (front & back)",
+    "frame": "Anodized aluminium alloy",
+    "junction_box": "IP68 / 3 diodes",
+    "connector": "MC4 compatible",
+    "cable": "12 AWG PV Wire (UL)",
+    "max_system_voltage": 1500,   # V DC
+    "max_series_fuse": 30,        # A
+    "mech_load_front_pa": 5400,   # Pa (113 psf)
+    "mech_load_rear_pa": 2400,    # Pa (50 psf)
+    "power_tolerance_w": (0, 4.99),  # +0/+4.99W
+    "voc": 52.37,                 # V - Open circuit voltage
+    "isc": 13.94,                 # A - Short circuit current
+    "vmp": 44.43,                 # V - Max power voltage
+    "imp": 13.28,                 # A - Max power current
+    "warranty_years": 30,         # Product warranty
+    "performance_warranty_years": 30,
+    "degradation_yr1": 0.01,     # 1% first year (N-type advantage)
     "degradation_annual": 0.004, # 0.4% per year after
-    "temp_coeff_pmax": -0.0026,  # -0.26%/°C
+    "temp_coeff_pmax": -0.0029,  # -0.29%/°C
 }
 
+# Inverter - SolarEdge string inverters w/ power optimizers
+# (590W panels exceed microinverter DC input limits)
 INVERTER_SPEC = {
-    "manufacturer": "Enphase",
-    "model": "IQ8A Microinverter",
-    "rated_power_w": 366,         # Continuous AC output
-    "peak_power_w": 430,          # Peak AC power
-    "max_dc_input_w": 480,        # Max DC input
-    "efficiency": 0.972,          # CEC weighted efficiency
+    "manufacturer": "SolarEdge",
+    "model": "SE7600H-US",
+    "type": "String inverter with DC power optimizers",
+    "rated_power_w": 7600,        # Continuous AC output per unit
+    "max_dc_input_w": 10000,      # Max DC input per unit
+    "efficiency": 0.995,          # 99.5% weighted (optimizer + inverter)
+    "warranty_years": 25,
+}
+
+OPTIMIZER_SPEC = {
+    "manufacturer": "SolarEdge",
+    "model": "P600",
+    "max_input_w": 600,           # Supports up to 600W panels
+    "max_output_w": 600,
+    "efficiency": 0.9986,         # 99.86% peak
     "warranty_years": 25,
 }
 
@@ -154,9 +186,10 @@ def design_system():
         for m in MONTHLY_PEAK_SUN_HOURS
     )
 
-    # System size calculation: target_kWh / (PSH * PR)
-    # production = system_kw * annual_psh * performance_ratio
-    system_size_kw = target_production / (annual_psh * performance_ratio)
+    # System size calculation: target_kWh / (PSH * PR * bifacial_factor)
+    # production = system_kw * annual_psh * performance_ratio * (1 + bifacial_gain)
+    bifacial_factor = 1 + BIFACIAL_GAIN
+    system_size_kw = target_production / (annual_psh * performance_ratio * bifacial_factor)
 
     # Panel count
     panels_exact = (system_size_kw * 1000) / PANEL_SPEC["wattage_stc"]
@@ -164,10 +197,17 @@ def design_system():
 
     # Actual system size based on panel count
     actual_system_kw = (num_panels * PANEL_SPEC["wattage_stc"]) / 1000
-    actual_production = actual_system_kw * annual_psh * performance_ratio
+    actual_production = actual_system_kw * annual_psh * performance_ratio * bifacial_factor
 
-    # Microinverters (1:1 ratio with panels)
-    num_inverters = num_panels
+    # String inverters: size based on total DC capacity
+    inverter_ac_w = INVERTER_SPEC["rated_power_w"]
+    num_inverters_exact = (actual_system_kw * 1000) / inverter_ac_w
+    num_inverters = int(num_inverters_exact) + (1 if num_inverters_exact % 1 > 0 else 0)
+    total_ac_capacity_kw = (num_inverters * inverter_ac_w) / 1000
+    dc_ac_ratio = actual_system_kw / total_ac_capacity_kw
+
+    # Power optimizers (1:1 with panels)
+    num_optimizers = num_panels
 
     # -------------------------------------------------------------------------
     # 3. MONTHLY PRODUCTION ESTIMATE
@@ -176,7 +216,7 @@ def design_system():
     for month in MONTHLY_CONSUMPTION:
         psh = MONTHLY_PEAK_SUN_HOURS[month]
         days = DAYS_IN_MONTH[month]
-        monthly_kwh = actual_system_kw * psh * days * performance_ratio
+        monthly_kwh = actual_system_kw * psh * days * performance_ratio * bifacial_factor
         monthly_production[month] = round(monthly_kwh, 1)
 
     # -------------------------------------------------------------------------
@@ -262,10 +302,15 @@ def design_system():
         },
         "system": {
             "size_kw_dc": round(actual_system_kw, 2),
+            "size_kw_ac": round(total_ac_capacity_kw, 2),
+            "dc_ac_ratio": round(dc_ac_ratio, 2),
             "num_panels": num_panels,
             "panel": PANEL_SPEC,
             "num_inverters": num_inverters,
             "inverter": INVERTER_SPEC,
+            "num_optimizers": num_optimizers,
+            "optimizer": OPTIMIZER_SPEC,
+            "bifacial_gain_pct": BIFACIAL_GAIN * 100,
             "performance_ratio": round(performance_ratio, 4),
             "annual_psh": round(annual_psh, 1),
             "tilt_deg": 27,
@@ -342,13 +387,35 @@ def print_report(design):
     print("-" * 72)
     print()
     print(f"  System Size (DC):      {s['size_kw_dc']:.2f} kWdc")
-    print(f"  Number of Panels:      {s['num_panels']}")
+    print(f"  System Size (AC):      {s['size_kw_ac']:.2f} kWac")
+    print(f"  DC:AC Ratio:           {s['dc_ac_ratio']:.2f}")
+    print()
+    print(f"  MODULES")
     print(f"  Panel:                 {s['panel']['manufacturer']} {s['panel']['model']}")
-    print(f"  Panel Wattage:         {s['panel']['wattage_stc']}W STC")
-    print(f"  Panel Efficiency:      {s['panel']['efficiency'] * 100:.1f}%")
+    print(f"  Panel Count:           {s['num_panels']}")
+    print(f"  Panel Wattage:         {s['panel']['wattage_stc']}W STC (front)")
+    print(f"  Panel Efficiency:      {s['panel']['efficiency'] * 100:.2f}%")
+    print(f"  Cell Technology:       {s['panel']['cells']}")
+    print(f"  Bifacial:              Yes ({s['panel']['bifaciality'] * 100:.0f}% bifaciality)")
+    print(f"  Bifacial Gain (est.):  {s['bifacial_gain_pct']:.0f}% (flat commercial roof)")
+    print(f"  Glass:                 {s['panel']['glass']}")
+    print(f"  Voc / Isc:            {s['panel']['voc']}V / {s['panel']['isc']}A")
+    print(f"  Vmp / Imp:            {s['panel']['vmp']}V / {s['panel']['imp']}A")
+    print(f"  Max System Voltage:    {s['panel']['max_system_voltage']}V DC")
+    print(f"  Mech. Load (front):   {s['panel']['mech_load_front_pa']} Pa ({s['panel']['mech_load_front_pa'] / 47.88:.0f} psf)")
+    print(f"  Weight:                {s['panel']['weight_kg']} kg ({s['panel']['weight_kg'] * 2.205:.1f} lbs)")
+    print(f"  Temp Coeff Pmax:       {s['panel']['temp_coeff_pmax'] * 100:.2f}%/°C")
+    print(f"  Warranty:              {s['panel']['warranty_years']} year product / {s['panel']['performance_warranty_years']} year performance")
+    print()
+    print(f"  INVERTERS")
     print(f"  Inverter:              {s['inverter']['manufacturer']} {s['inverter']['model']}")
-    print(f"  Inverter Count:        {s['num_inverters']} (1:1 micro)")
-    print(f"  Inverter Efficiency:   {s['inverter']['efficiency'] * 100:.1f}% CEC")
+    print(f"  Type:                  {s['inverter']['type']}")
+    print(f"  Inverter Count:        {s['num_inverters']} units")
+    print(f"  Rated AC per Unit:     {s['inverter']['rated_power_w']}W")
+    print(f"  Optimizer:             {s['optimizer']['manufacturer']} {s['optimizer']['model']}")
+    print(f"  Optimizer Count:       {s['num_optimizers']} (1:1 with panels)")
+    print()
+    print(f"  ARRAY PARAMETERS")
     print(f"  Array Tilt:            {s['tilt_deg']}°")
     print(f"  Array Azimuth:         {s['azimuth_deg']}° (due south)")
     print(f"  Performance Ratio:     {s['performance_ratio']:.2%}")
@@ -431,17 +498,21 @@ def print_report(design):
     print("  DESIGN SUMMARY")
     print("=" * 72)
     print()
-    print(f"  System:  {s['size_kw_dc']:.2f} kWdc  |  {s['num_panels']} x {s['panel']['wattage_stc']}W panels  |  Enphase IQ8A micros")
+    print(f"  Module:  {s['panel']['manufacturer']} {s['panel']['model']} (bifacial N-type TOPCon)")
+    print(f"  System:  {s['size_kw_dc']:.2f} kWdc / {s['size_kw_ac']:.2f} kWac  |  {s['num_panels']} x {s['panel']['wattage_stc']}W panels")
+    print(f"  Invert:  {s['num_inverters']}x {s['inverter']['manufacturer']} {s['inverter']['model']}  |  {s['num_optimizers']}x {s['optimizer']['model']} optimizers")
     print(f"  Output:  {p['annual_kwh']:,.1f} kWh/yr  |  {p['offset_pct']:.1f}% offset  |  {p['year1_kwh']:,.1f} kWh Yr1")
     print(f"  Cost:    ${f['net_cost']:,.2f} net  |  {f['payback_years']} yr payback  |  {f['roi_pct']:.1f}% 25yr ROI")
     print()
     print("  Notes:")
     print("  - Production estimates based on NREL TMY3 data for Boston/Waltham, MA")
     print("  - Performance ratio includes snow loss factor for New England climate")
+    print("  - Bifacial gain estimated at 5% for flat commercial roof w/ light membrane")
+    print("  - N-type TOPCon cells: lower degradation and better low-light performance")
     print("  - MA SMART incentive estimated at $0.08/kWh for 20 years")
     print("  - Rate escalation assumed at 5% annually per utility trend")
+    print("  - Panel weight 32.0 kg (70.5 lbs) - structural review recommended")
     print("  - Site survey required to confirm roof condition, shading, and orientation")
-    print("  - Structural engineering review recommended for commercial roof loading")
     print("  - Interconnection application required with Eversource East")
     print()
     print("=" * 72)
